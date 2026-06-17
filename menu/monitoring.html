@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMART ECG RECORDER AI</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tealapp: '#259e8d',
+                        tealhover: '#1e8576',
+                        lightbg: '#f4f6f8'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        /* Page-specific small overrides; base visual tokens come from theme.css */
+        @keyframes pulse-red { 
+            0%, 100% { border-color: rgba(239, 68, 68, 1); background-color: rgba(254, 242, 242, 1); } 
+            50% { border-color: rgba(185, 28, 28, 1); background-color: rgba(254, 226, 226, 1); } 
+        }
+        .danger-anim { animation: pulse-red 2s infinite; border-width: 4px; }
+        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .ecg-canvas { width: 100%; height: 350px; display: block; }
+    </style>
+</head>
+
+<body x-data="ecgApp()" class="p-6 md:p-10 bg-slate-50">
+
+    <div class="max-w-7xl mx-auto">
+
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
+            <div>
+                <h1 class="text-4xl md:text-5xl font-black italic tracking-tighter text-slate-900 drop-shadow-sm">
+                    Smart EKG - <span class="text-tealapp">JantungKuSehat</span>
+                </h1>
+                <div class="flex flex-wrap gap-3 mt-4">
+                    <div class="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest border border-blue-100 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                        <span x-text="modelStatus"></span>
+                    </div>
+                    <div class="bg-emerald-50 text-emerald-600 px-4 py-1.5 rounded-full font-black text-[10px] uppercase tracking-widest border border-emerald-100">
+                        Firebase: <span x-text="firebaseStatus"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white px-8 py-4 rounded-3xl shadow-sm font-black text-3xl italic tracking-tighter border border-slate-100 transition-colors duration-300"
+                 :class="{'text-yellow-600': bpm > 100 || (bpm > 0 && bpm < 60), 'text-slate-900': bpm >= 60 && bpm <= 100}">
+                <span class="text-lg font-normal opacity-50 not-italic tracking-normal">BPM:</span> 
+                <span x-text="bpm"></span>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 mb-8 flex flex-wrap gap-4 items-end justify-between">
+            <div class="flex flex-wrap gap-4 items-end">
+                <div>
+                    <label class="font-black text-slate-400 text-[10px] block mb-2 uppercase tracking-[0.2em]">Durasi (Menit)</label>
+                    <input type="number" min="1" x-model.number="recordMinutes" 
+                           class="bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl px-4 py-3.5 font-black w-24 outline-none focus:border-tealapp focus:ring-1 focus:ring-tealapp transition-all text-center">
+                </div>
+                
+                <button @click="startRecording()" :disabled="isRecording" 
+                        class="bg-tealapp hover:bg-tealhover disabled:bg-slate-200 disabled:text-slate-400 text-white px-8 py-3.5 rounded-2xl font-black text-xs transition-all shadow-lg hover:shadow-tealapp/30 uppercase tracking-widest flex items-center gap-2">
+                    ▶ Mulai Rekam
+                </button>
+                
+                <button @click="stopRecording()" :disabled="!isRecording" 
+                        class="bg-rose-500 hover:bg-rose-600 disabled:bg-slate-200 disabled:text-slate-400 text-white px-8 py-3.5 rounded-2xl font-black text-xs transition-all shadow-lg hover:shadow-rose-500/30 uppercase tracking-widest flex items-center gap-2">
+                    ■ Stop
+                </button>
+                
+                <button @click="saveResult()" :disabled="!analysisFinished || isSaving" 
+                        class="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white px-8 py-3.5 rounded-2xl font-black text-xs transition-all shadow-lg hover:shadow-blue-600/30 uppercase tracking-widest flex items-center gap-2">
+                    <span x-show="isSaving" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    <span x-text="isSaving ? 'Menyimpan...' : '💾 Simpan Rekaman'"></span>
+                </button>
+            </div>
+            
+            <div class="font-black text-slate-500 text-xl ml-auto bg-slate-50 px-6 py-3 rounded-2xl border border-slate-100 flex items-center gap-3">
+                <span class="text-xs uppercase tracking-widest">Timer</span>
+                <span x-text="formattedTimer" class="font-mono text-2xl text-tealapp"></span>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 mb-8 p-5">
+            <div class="rounded-2xl overflow-hidden border border-slate-800 bg-[#020617]">
+                <canvas id="ecgCanvas" class="ecg-canvas"></canvas>
+            </div>
+            <div class="flex justify-between mt-5 px-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] font-mono">
+                <div>VOLTASE: <span x-text="latestVoltage.toFixed(2)" class="text-slate-800"></span></div>
+                <div>RECORDED POINTS: <span x-text="recordedData.length" class="text-tealapp"></span> / <span x-text="recordMinutes * 60 * 125"></span> PTS</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="rounded-3xl p-8 text-white flex flex-col justify-between transition-colors duration-500 shadow-xl"
+                 :class="{'bg-yellow-500': bpm > 100 || (bpm > 0 && bpm < 60), 'bg-tealapp': bpm >= 60 && bpm <= 100 || bpm === 0}">
+                <div class="text-[10px] tracking-[0.4em] font-black opacity-70 uppercase mb-4">Average Heart Rate</div>
+                <div class="text-[5rem] lg:text-[6rem] font-black italic leading-none my-6 drop-shadow-md">
+                    <span x-text="bpm"></span>
+                    <span class="text-3xl opacity-50 font-normal">BPM</span>
+                </div>
+                <div class="text-[10px] opacity-60 font-bold uppercase tracking-widest">*Diambil dari parameter hardware IoT</div>
+            </div>
+
+            <div class="rounded-3xl p-8 transition-all duration-500 flex flex-col justify-between border-4 shadow-xl"
+                 :class="{
+                    'danger-anim': aiLabel === 'ARITMIA',
+                    'border-yellow-400 bg-yellow-50 text-yellow-900': ['TAKIKARDIA', 'BRADIKARDIA'].includes(aiLabel),
+                    'border-tealapp bg-white text-slate-900': !['ARITMIA', 'TAKIKARDIA', 'BRADIKARDIA'].includes(aiLabel) && !aiLabel.includes('ERROR') && aiLabel !== 'DATA KURANG',
+                    'border-red-900 bg-red-50 text-red-900': aiLabel.includes('ERROR') || aiLabel === 'DATA KURANG'
+                 }">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="text-[10px] uppercase font-black opacity-50 tracking-[0.3em]">Diagnosis System</div>
+                    <div class="bg-slate-900 text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest">
+                        <span x-text="confidence"></span>% ACC
+                    </div>
+                </div>
+                <div class="text-4xl md:text-5xl font-black italic tracking-tighter uppercase my-auto py-8" x-text="aiLabel"></div>
+                <div class="text-[10px] font-bold opacity-50 uppercase tracking-[0.2em] text-right">
+                    *Hybrid Logic 125Hz (Rule-based + AI)
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // AI Model Variables
+        let tfModel = null;
+        
+        // --- IMPROVED GRAPH BUFFER & ANIMATION QUEUE ---
+        // Meningkatkan ukuran buffer untuk menghindari efek patah-patah/kurang rapat
+        const DRAW_BUFFER_SIZE = 800; 
+        let ecgDrawBuffer = new Float32Array(DRAW_BUFFER_SIZE).fill(720);
+        let writeIndex = 0;
+        
+        let canvas;
+        let ctx;
+        let ECGBG = '#020617';
+        let ECGLINE = '#34d399';
+
+        // Antrean agar data tidak dilompat-lompat saat batch dari firebase masuk
+        let ecgQueue = [];
+        let lastFrameTime = 0;
+        const SAMPLE_RATE = 125; // Sesuai frekuensi hardware
+        const msPerSample = 1000 / SAMPLE_RATE; // ~8ms per sample
+        let timeAccumulator = 0;
+
+        function initCanvas() {
+            canvas = document.getElementById('ecgCanvas');
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            ctx = canvas.getContext('2d', { alpha: false });
+            
+            try {
+                const root = getComputedStyle(document.documentElement);
+                const bg = root.getPropertyValue('--color-ecg-bg').trim();
+                const line = root.getPropertyValue('--color-ecg-line').trim();
+                if (bg) ECGBG = bg;
+                if (line) ECGLINE = line;
+            } catch (e) {}
+            
+            requestAnimationFrame((ts) => {
+                lastFrameTime = ts;
+                drawCanvas(ts);
+            });
+        }
+
+        function resizeCanvas() {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight || 350;
+        }
+
+        function pushECG(value) {
+            ecgDrawBuffer[writeIndex] = value;
+            writeIndex++;
+            if (writeIndex >= DRAW_BUFFER_SIZE) {
+                writeIndex = 0;
+            }
+        }
+
+        function drawCanvas(timestamp) {
+            if (!timestamp) timestamp = performance.now();
+            const deltaTime = timestamp - lastFrameTime;
+            lastFrameTime = timestamp;
+
+            timeAccumulator += deltaTime;
+
+            // Atur kecepatan pemutaran data menyesuaikan panjang antrean (untuk sinkronisasi real-time)
+            let currentMsPerSample = msPerSample;
+            if (ecgQueue.length > 250) {
+                currentMsPerSample = msPerSample * 0.5; // Percepat 2x jika antrean mulai penuh
+            } 
+            if (ecgQueue.length > 600) {
+                currentMsPerSample = msPerSample * 0.25; // Percepat 4x
+            } 
+            if (ecgQueue.length > 1500) {
+                // Drop data lama jika antrean terlalu panjang agar tidak macet
+                ecgQueue = ecgQueue.slice(ecgQueue.length - 800); 
+            }
+
+            // Tembakkan data ke buffer canvas berdasarkan time elapsed
+            while (timeAccumulator >= currentMsPerSample && ecgQueue.length > 0) {
+                pushECG(ecgQueue.shift());
+                timeAccumulator -= currentMsPerSample;
+            }
+
+            if (ecgQueue.length === 0) {
+                timeAccumulator = 0;
+            }
+
+            // --- Mulai Menggambar ---
+            ctx.fillStyle = ECGBG; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Grid Background
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.08)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 40) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 40) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
+            // Garis EKG
+            ctx.strokeStyle = ECGLINE; 
+            ctx.lineWidth = 2.5;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+
+            const step = canvas.width / (DRAW_BUFFER_SIZE - 1);
+            
+            for (let i = 0; i < DRAW_BUFFER_SIZE; i++) {
+                const index = (writeIndex + i) % DRAW_BUFFER_SIZE;
+                let val = ecgDrawBuffer[index];
+
+                // Clamp visualisasi
+                if (val < 650) val = 650;
+                if (val > 800) val = 800;
+
+                const normalized = (val - 650) / 150;
+
+                const x = i * step;
+
+                // tinggi grafik diperkecil
+                const paddingY = 110;
+                const drawHeight = canvas.height - (paddingY * 2);
+
+                const y =
+                    (canvas.height - paddingY) -
+                    (normalized * drawHeight);
+
+                if (i === 0) { 
+                    ctx.moveTo(x, y); 
+                } else { 
+                    ctx.lineTo(x, y); 
+                }
+            }
+            
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = ECGLINE;
+            ctx.stroke();
+            ctx.shadowBlur = 0; 
+            
+            requestAnimationFrame(drawCanvas);
+        }
+
+        function ecgApp() {
+            return {
+                bpm: 0,
+                latestVoltage: 0,
+                modelStatus: 'LOADING MODEL...',
+                firebaseStatus: 'OFFLINE',
+                aiLabel: 'MENUNGGU DATA...',
+                confidence: 0,
+                isRecording: false,
+                isSaving: false,
+                analysisFinished: false,
+                recordMinutes: 1, 
+                recordTimer: 0,
+                formattedTimer: '00:00',
+                recordedData: [],
+                timerInterval: null,
+
+                init() {
+                    initCanvas();
+                    this.initFirebase();
+                    this.loadModel();
+                },
+
+                initFirebase() {
+                    const config = {
+                        apiKey: "AIzaSyD7cegeyQVu5d0cRkv1dyAjzXWOz8gE-HM",
+                        authDomain: "smart-ekg-tmj-6b.firebaseapp.com",
+                        databaseURL: "https://smart-ekg-tmj-6b-default-rtdb.asia-southeast1.firebasedatabase.app",
+                        projectId: "smart-ekg-tmj-6b"
+                    };
+
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp(config);
+                    }
+                    this.firebaseStatus = 'LIVE';
+
+                    firebase.database().ref('monitoring/live_data').on('value', (snapshot) => {
+                        const data = snapshot.val();
+                        if (!data) return;
+
+                        this.bpm = parseInt(data.bpm || 0);
+
+                        if (!this.isRecording && !this.aiLabel.includes('ANALYZING') && !this.analysisFinished) {
+                            if (this.bpm > 100) {
+                                this.aiLabel = 'TAKIKARDIA';
+                                this.confidence = 100;
+                            } else if (this.bpm > 0 && this.bpm < 60) {
+                                this.aiLabel = 'BRADIKARDIA';
+                                this.confidence = 100;
+                            } else if (this.bpm >= 60 && this.bpm <= 100) {
+                                this.aiLabel = 'STANDBY';
+                                this.confidence = 0;
+                            }
+                        }
+
+                        if (data.graph_value) {
+                            let arr = [];
+                            if (Array.isArray(data.graph_value)) {
+                                arr = data.graph_value;
+                            } else if (typeof data.graph_value === 'object') {
+                                arr = Object.values(data.graph_value);
+                            }
+
+                            if (arr.length > 0) {
+                                let lastValidEcg = null;
+                                
+                                for (let i = 0; i < arr.length; i++) {
+                                    const ecg = parseFloat(arr[i]);
+                                    if (!isNaN(ecg)) {
+                                        // Masukkan ke Antrean Animasi Grafik secara visual
+                                        ecgQueue.push(ecg);
+                                        lastValidEcg = ecg;
+
+                                        // Simpan ke rekaman state secara absolut
+                                        if (this.isRecording) {
+                                            this.recordedData.push(ecg);
+                                        }
+                                    }
+                                }
+                                
+                                // Update label voltase hanya sekali di akhir batch agar tidak lag/spam render Alpine
+                                if (lastValidEcg !== null) {
+                                    this.latestVoltage = lastValidEcg;
+                                }
+                            }
+                        }
+                    });
+                },
+
+                async loadModel() {
+                    try {
+                        await tf.ready();
+                        try {
+                            tfModel = await tf.loadGraphModel('../tfjs_hybrid_model/model.json');
+                        } catch (e) {
+                            tfModel = await tf.loadLayersModel('../tfjs_hybrid_model/model.json');
+                        }
+                        this.modelStatus = 'MODEL ACTIVE';
+                    } catch (e) {
+                        console.error(e);
+                        this.modelStatus = 'MODEL ERROR';
+                    }
+                },
+
+                updateFormattedTimer() {
+                    const minutes = Math.floor(this.recordTimer / 60);
+                    const seconds = this.recordTimer % 60;
+                    this.formattedTimer = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                },
+
+                startRecording() {
+                    if (this.recordMinutes < 1) {
+                        alert('Minimal rekam data adalah 1 menit!');
+                        return;
+                    }
+
+                    this.recordedData = [];
+                    this.recordTimer = 0;
+                    this.analysisFinished = false;
+                    this.aiLabel = 'MEREKAM ECG...';
+                    this.confidence = 0;
+                    this.isRecording = true;
+                    this.updateFormattedTimer();
+
+                    this.timerInterval = setInterval(() => {
+                        this.recordTimer++;
+                        this.updateFormattedTimer();
+
+                        const limit = this.recordMinutes * 60;
+                        if (this.recordTimer >= limit) {
+                            this.stopRecording();
+                        }
+                    }, 1000);
+                },
+
+                async stopRecording() {
+                    if (!this.isRecording) return;
+
+                    this.isRecording = false;
+                    clearInterval(this.timerInterval);
+                    this.aiLabel = 'ANALYZING...';
+
+                    setTimeout(async () => {
+                        await this.analyzeRecording();
+                    }, 300);
+                },
+
+                async analyzeRecording() {
+                    try {
+                        const totalSamples = this.recordedData.length;
+                        if (totalSamples < 375) {
+                            this.aiLabel = 'DATA KURANG';
+                            return;
+                        }
+
+                        let foundAritmia = false;
+                        let maxGlobalConfidence = 0;
+                        const WINDOW_SIZE = 375;
+                        const STEP_SIZE = 125; 
+
+                        for (let i = 0; i <= totalSamples - WINDOW_SIZE; i += STEP_SIZE) {
+                            const rawChunk = this.recordedData.slice(i, i + WINDOW_SIZE);
+                            const min = Math.min(...rawChunk);
+                            const max = Math.max(...rawChunk);
+                            
+                            if (max === min) continue;
+
+                            const floatArray = new Float32Array(WINDOW_SIZE);
+                            for (let j = 0; j < WINDOW_SIZE; j++) {
+                                floatArray[j] = (rawChunk[j] - min) / (max - min + 1e-7);
+                            }
+
+                            const result = tf.tidy(() => {
+                                const inputTensor = tf.tensor3d(floatArray, [1, WINDOW_SIZE, 1], 'float32');
+                                const output = tfModel.predict(inputTensor);
+                                const data = output.dataSync();
+                                return Array.from(data);
+                            });
+
+                            const score = Math.max(...result);
+                            const idx = result.indexOf(score);
+
+                            if (idx === 1) { 
+                                foundAritmia = true;
+                                if (score > maxGlobalConfidence) {
+                                    maxGlobalConfidence = score;
+                                }
+                            } else {
+                                if (!foundAritmia && score > maxGlobalConfidence) {
+                                    maxGlobalConfidence = score;
+                                }
+                            }
+                        }
+
+                        if (foundAritmia) {
+                            this.aiLabel = 'ARITMIA';
+                            this.confidence = Math.round(maxGlobalConfidence * 100);
+                        } else if (this.bpm > 100) {
+                            this.aiLabel = 'TAKIKARDIA';
+                            this.confidence = 100;
+                        } else if (this.bpm > 0 && this.bpm < 60) {
+                            this.aiLabel = 'BRADIKARDIA';
+                            this.confidence = 100;
+                        } else {
+                            this.aiLabel = 'NORMAL';
+                            this.confidence = Math.round(maxGlobalConfidence * 100);
+                        }
+
+                        this.analysisFinished = true;
+
+                    } catch (e) {
+                        console.error(e);
+                        this.aiLabel = 'ANALYSIS ERROR';
+                    }
+                },
+
+                async saveResult() {
+                    if (this.isSaving) return;
+                    this.isSaving = true;
+
+                    try {
+                        if (this.recordedData.length === 0 || !this.analysisFinished) {
+                            alert('Data rekaman kosong atau belum selesai dianalisis AI!');
+                            this.isSaving = false;
+                            return;
+                        }
+
+                        const dbRef = firebase.database().ref('history_records/admin');
+                        const newRecordRef = dbRef.push();
+
+                        const payloadMeta = {
+                            timestamp: new Date().toISOString(),
+                            username: "Admin_Record_" + new Date().getTime().toString().slice(-4),
+                            duration_minutes: this.recordMinutes,
+                            duration_seconds: this.recordTimer,
+                            bpm: this.bpm,
+                            statusML: this.aiLabel,
+                            confidence: this.confidence,
+                            total_points: this.recordedData.length,
+                            jk: '-',
+                            umur: '',
+                            tb: '',
+                            bb: ''
+                        };
+
+                        await newRecordRef.set(payloadMeta);
+
+                        const CHUNK_SIZE = 5000;
+                        for (let i = 0; i < this.recordedData.length; i += CHUNK_SIZE) {
+                            const graphChunk = {};
+                            for (let j = i; j < i + CHUNK_SIZE && j < this.recordedData.length; j++) {
+                                const key = 'pt_' + String(j).padStart(6, '0');
+                                graphChunk[key] = Number(this.recordedData[j].toFixed(2));
+                            }
+                            await newRecordRef.child('graph_value').update(graphChunk);
+                        }
+
+                        alert('✅ Sukses! Rekaman EKG ' + this.recordMinutes + ' menit berhasil disimpan ke riwayat Admin.');
+                        this.analysisFinished = false;
+
+                    } catch (e) {
+                        console.error('SAVE ERROR:', e);
+                        alert('❌ Gagal menyimpan data: ' + e.message);
+                    } finally {
+                        this.isSaving = false;
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

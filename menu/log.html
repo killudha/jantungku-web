@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart EKG - JantungKuSehat</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Base styles in ../theme.css; keep page-specific utilities here. */
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        /* Custom Scrollbar for log container */
+        .log-container::-webkit-scrollbar { width: 6px; }
+        .log-container::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        .log-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .log-container::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+
+<body x-data="logAnalyticsApp()">
+    <div class="max-w-7xl mx-auto">
+        
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-5xl font-black uppercase italic tracking-tighter text-slate-900">System Log</h1>
+                <p class="text-slate-400 mt-2 font-semibold">Analitik Diagnostik & Catatan Aktivitas Database</p>
+            </div>
+            <div class="px-5 py-2 rounded-full font-black text-sm shadow-sm bg-blue-50 text-blue-600 border border-blue-100 flex items-center gap-2">
+                <div class="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
+                Live Sync Active
+            </div>
+        </div>
+
+        <template x-if="loading">
+            <div class="card text-center py-16 text-slate-400 font-bold italic shadow-sm border border-slate-100">
+                🔄 Memproses agregasi data analitik dari Firebase...
+            </div>
+        </template>
+
+        <template x-if="!loading">
+            <div class="space-y-6">
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="card border-b-4 border-blue-500 hover:-translate-y-1 transition-transform">
+                        <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Total Perekaman</p>
+                        <h3 class="text-4xl font-black text-slate-900" x-text="stats.total"></h3>
+                    </div>
+                    <div class="card border-b-4 border-emerald-500 hover:-translate-y-1 transition-transform">
+                        <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Diagnosis Normal</p>
+                        <h3 class="text-4xl font-black text-emerald-600" x-text="stats.normal"></h3>
+                    </div>
+                    <div class="card border-b-4 border-rose-500 hover:-translate-y-1 transition-transform">
+                        <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Deteksi Aritmia</p>
+                        <h3 class="text-4xl font-black text-rose-600" x-text="stats.aritmia"></h3>
+                    </div>
+                    <div class="card border-b-4 border-amber-500 hover:-translate-y-1 transition-transform">
+                        <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Anomali Ritme</p>
+                        <h3 class="text-4xl font-black text-amber-600" x-text="stats.anomali"></h3>
+                        <p class="text-[9px] text-slate-400 mt-1 uppercase">Takikardia / Bradikardia</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="card md:col-span-1 border border-slate-100">
+                        <h3 class="font-black text-sm tracking-wider text-slate-400 uppercase border-b pb-3 mb-4">Distribusi Diagnosa</h3>
+                        <div class="relative h-64 w-full">
+                            <canvas id="compositionChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="card md:col-span-2 border border-slate-100">
+                        <h3 class="font-black text-sm tracking-wider text-slate-400 uppercase border-b pb-3 mb-4">Aktivitas Perekaman Harian</h3>
+                        <div class="relative h-64 w-full">
+                            <canvas id="timelineChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border border-slate-100">
+                    <div class="flex justify-between items-center border-b pb-4 mb-4">
+                        <h3 class="font-black text-sm tracking-wider text-slate-400 uppercase">Catatan Aktivitas Sistem (Timeline)</h3>
+                        <span class="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-lg">Menampilkan 50 Log Terakhir</span>
+                    </div>
+
+                    <div class="log-container h-96 overflow-y-auto pr-4 space-y-4">
+                        <template x-for="log in logs" :key="log.id">
+                            
+                            <div class="flex gap-4 p-4 rounded-2xl border transition-colors hover:shadow-md"
+                                 :class="{
+                                     'bg-emerald-50/50 border-emerald-100 hover:border-emerald-300': log.result === 'NORMAL',
+                                     'bg-rose-50/50 border-rose-100 hover:border-rose-300': log.result === 'ARITMIA',
+                                     'bg-amber-50/50 border-amber-100 hover:border-amber-300': ['TAKIKARDIA', 'BRADIKARDIA'].includes(log.result)
+                                 }">
+                                
+                                <div class="w-12 h-12 rounded-full flex items-center justify-center text-xl shrink-0 shadow-sm"
+                                     :class="{
+                                         'bg-emerald-100 text-emerald-600': log.result === 'NORMAL',
+                                         'bg-rose-100 text-rose-600': log.result === 'ARITMIA',
+                                         'bg-amber-100 text-amber-600': ['TAKIKARDIA', 'BRADIKARDIA'].includes(log.result)
+                                     }">
+                                    <span x-text="log.result === 'NORMAL' ? '✅' : (log.result === 'ARITMIA' ? '🚨' : '⚠️')"></span>
+                                </div>
+
+                                <div class="flex-grow">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <h4 class="font-black text-sm"
+                                            :class="{
+                                                'text-emerald-700': log.result === 'NORMAL',
+                                                'text-rose-700': log.result === 'ARITMIA',
+                                                'text-amber-700': ['TAKIKARDIA', 'BRADIKARDIA'].includes(log.result)
+                                            }">
+                                            Sistem Mendiagnosis <span x-text="log.result"></span>
+                                        </h4>
+                                        <span class="text-[10px] font-mono font-bold text-slate-400 bg-white px-2 py-1 rounded-md border" x-text="formatDate(log.timestamp)"></span>
+                                    </div>
+                                    <p class="text-xs font-medium text-slate-600 mb-2 leading-relaxed">
+                                        Perekaman EKG selesai untuk pasien <strong class="text-slate-800" x-text="log.nama || 'Anonim'"></strong>. 
+                                        Sistem AI mendeteksi <span class="font-bold underline decoration-slate-300" x-text="log.result"></span> 
+                                        dengan rata-rata denyut <strong class="text-slate-800 font-mono" x-text="log.avg_bpm + ' BPM'"></strong> 
+                                        selama durasi <span x-text="log.duration_minutes"></span> menit.
+                                    </p>
+                                    
+                                    <a :href="'details.html?id=' + log.id" class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest transition-colors"
+                                       :class="{
+                                            'text-emerald-600 hover:text-emerald-800': log.result === 'NORMAL',
+                                            'text-rose-600 hover:text-rose-800': log.result === 'ARITMIA',
+                                            'text-amber-600 hover:text-amber-800': ['TAKIKARDIA', 'BRADIKARDIA'].includes(log.result)
+                                        }">
+                                        Tinjau Sinyal Grafis ➔
+                                    </a>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template x-if="logs.length === 0">
+                            <div class="text-center py-10 text-slate-400 font-bold italic">
+                                Belum ada riwayat aktivitas yang tercatat.
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+            </div>
+        </template>
+    </div>
+
+    <script>
+        // Deklarasi global untuk memori instance grafik agar bisa di-destroy saat update
+        let compChartInstance = null;
+        let timeChartInstance = null;
+
+        function logAnalyticsApp() {
+            return {
+                loading: true,
+                logs: [], // Array utuh untuk daftar teks log
+                
+                // Objek untuk KPI Cards
+                stats: { total: 0, normal: 0, aritmia: 0, anomali: 0 },
+                
+                // Data olahan khusus untuk Grafik
+                chartDataResult: { normal: 0, aritmia: 0, takikardia: 0, bradikardia: 0 },
+                chartDataTimeline: { labels: [], data: [] },
+
+                init() {
+                    const config = {
+                        apiKey: "AIzaSyD7cegeyQVu5d0cRkv1dyAjzXWOz8gE-HM",
+                        authDomain: "smart-ekg-tmj-6b.firebaseapp.com",
+                        databaseURL: "https://smart-ekg-tmj-6b-default-rtdb.asia-southeast1.firebasedatabase.app",
+                        projectId: "smart-ekg-tmj-6b"
+                    };
+                    if (!firebase.apps.length) firebase.initializeApp(config);
+
+                    // Menarik data riwayat untuk diagregasi
+                    firebase.database().ref('record_history').on('value', (snapshot) => {
+                        const data = snapshot.val();
+                        if (!data) { this.loading = false; return; }
+
+                        const tempLogs = [];
+                        
+                        // Reset Penghitung
+                        this.stats = { total: 0, normal: 0, aritmia: 0, anomali: 0 };
+                        this.chartDataResult = { normal: 0, aritmia: 0, takikardia: 0, bradikardia: 0 };
+                        let dailyGroup = {}; // Object untuk menampung jumlah rekaman per hari
+
+                        Object.keys(data).forEach(key => {
+                            const record = data[key];
+                            tempLogs.push({ id: key, ...record });
+
+                            // Hitung KPI
+                            this.stats.total++;
+                            if (record.result === 'NORMAL') { this.stats.normal++; this.chartDataResult.normal++; }
+                            else if (record.result === 'ARITMIA') { this.stats.aritmia++; this.chartDataResult.aritmia++; }
+                            else if (record.result === 'TAKIKARDIA') { this.stats.anomali++; this.chartDataResult.takikardia++; }
+                            else if (record.result === 'BRADIKARDIA') { this.stats.anomali++; this.chartDataResult.bradikardia++; }
+
+                            // Ekstraksi Tanggal (YYYY-MM-DD) untuk Grafik Garis
+                            if (record.timestamp) {
+                                const dateKey = new Date(record.timestamp).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+                                if (!dailyGroup[dateKey]) dailyGroup[dateKey] = 0;
+                                dailyGroup[dateKey]++;
+                            }
+                        });
+
+                        // Susun data untuk Timeline Chart (urut dari tanggal terlama ke terbaru)
+                        this.chartDataTimeline.labels = Object.keys(dailyGroup);
+                        this.chartDataTimeline.data = Object.values(dailyGroup);
+
+                        // Urutkan teks log dari yang paling baru ke lama, dan batasi 50 terakhir agar web tidak berat
+                        this.logs = tempLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 50);
+                        
+                        this.loading = false;
+                        
+                        // Render ulang grafik setelah DOM siap
+                        this.$nextTick(() => { this.renderCharts(); });
+                    });
+                },
+
+                renderCharts() {
+                    // 1. DOUGHNUT CHART (Komposisi Diagnosa)
+                    const ctxComp = document.getElementById('compositionChart');
+                    if (ctxComp) {
+                        if (compChartInstance) compChartInstance.destroy(); // Hapus canvas lama jika live update
+                        
+                        compChartInstance = new Chart(ctxComp.getContext('2d'), {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Normal', 'Aritmia', 'Takikardia', 'Bradikardia'],
+                                datasets: [{
+                                    data: [
+                                        this.chartDataResult.normal, 
+                                        this.chartDataResult.aritmia, 
+                                        this.chartDataResult.takikardia, 
+                                        this.chartDataResult.bradikardia
+                                    ],
+                                    backgroundColor: ['#10b981', '#f43f5e', '#f59e0b', '#8b5cf6'],
+                                    borderWidth: 0,
+                                    hoverOffset: 4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                cutout: '75%',
+                                plugins: {
+                                    legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { family: 'Inter', size: 10, weight: 'bold' } } }
+                                }
+                            }
+                        });
+                    }
+
+                    // 2. LINE CHART (Tren Perekaman)
+                    const ctxTime = document.getElementById('timelineChart');
+                    if (ctxTime) {
+                        if (timeChartInstance) timeChartInstance.destroy();
+                        
+                        timeChartInstance = new Chart(ctxTime.getContext('2d'), {
+                            type: 'line',
+                            data: {
+                                labels: this.chartDataTimeline.labels,
+                                datasets: [{
+                                    label: 'Jumlah EKG Record',
+                                    data: this.chartDataTimeline.data,
+                                    borderColor: '#3b82f6',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    borderWidth: 3,
+                                    fill: true,
+                                    tension: 0.4, // Membuat garis melengkung halus
+                                    pointBackgroundColor: '#ffffff',
+                                    pointBorderColor: '#3b82f6',
+                                    pointBorderWidth: 2,
+                                    pointRadius: 4,
+                                    pointHoverRadius: 6
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: {
+                                    y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Inter' } }, grid: { color: '#f1f5f9' } },
+                                    x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 10 } } }
+                                }
+                            }
+                        });
+                    }
+                },
+
+                formatDate(isoString) {
+                    if (!isoString) return '-';
+                    return new Date(isoString).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' WIB';
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

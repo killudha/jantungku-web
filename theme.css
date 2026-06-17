@@ -1,0 +1,64 @@
+/* theme.css */
+:root {
+    --color-primary: #259e8d; 
+    --color-primary-hover: #1e8576;
+    --color-bg: #f8fafc;
+    --color-card: #ffffff;
+    --color-border: #e2e8f0;
+    --color-ecg-bg: #020617;
+    --color-ecg-line: #34d399;
+}
+
+body { 
+    background-color: var(--color-bg); 
+    font-family: 'Inter', sans-serif; 
+    color: #1e293b; 
+}
+
+.card { 
+    background: var(--color-card); 
+    border-radius: 24px; 
+    padding: 30px; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03); 
+    border: 1px solid #f1f5f9;
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover { background-color: var(--color-primary-hover); }
+
+/* Khusus Canvas agar tetap gelap untuk kontras EKG */
+.ecg-canvas { 
+    background: var(--color-ecg-bg); 
+    border-radius: 20px; 
+    width: 100%; 
+    height: 350px; 
+    display: block; 
+}
+
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Map legacy Tailwind `blue-*` utilities to the project's primary theme color */
+/* This keeps existing HTML classes functional while unifying the brand color */
+.text-blue-600 { color: var(--color-primary) !important; }
+.text-blue-700 { color: var(--color-primary-hover) !important; }
+.hover\:text-blue-700:hover { color: var(--color-primary-hover) !important; }
+.bg-blue-50 { background-color: rgba(37,158,141,0.06) !important; }
+.bg-blue-600 { background-color: var(--color-primary) !important; }
+.bg-blue-700 { background-color: var(--color-primary-hover) !important; }
+.hover\:bg-blue-700:hover { background-color: var(--color-primary-hover) !important; }
+.border-blue-100 { border-color: rgba(37,158,141,0.12) !important; }
+.border-blue-500 { border-color: var(--color-primary) !important; }
+.border-blue-600 { border-color: var(--color-primary) !important; }
+.shadow-blue-200 { box-shadow: 0 10px 25px rgba(37,158,141,0.08) !important; }
+.hover\:shadow-blue-600\/30:hover { box-shadow: 0 10px 25px rgba(37,158,141,0.3) !important; }
+.focus\:border-blue-500:focus { border-color: var(--color-primary) !important; }
+.focus\:ring-blue-500:focus { box-shadow: 0 0 0 6px rgba(37,158,141,0.12) !important; }
+.focus\:ring-blue-200:focus { box-shadow: 0 0 0 6px rgba(37,158,141,0.06) !important; }
+
+/* Small helper to ensure teal shadows used where explicit blue shadows were present */
+.shadow-tealapp\/20 { box-shadow: 0 10px 25px rgba(37,158,141,0.12) !important; }

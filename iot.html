@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>IoT Pipeline - Smart EKG</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+    font-family:'Inter',sans-serif;
+    background:#eefaf6;
+    color:#334155;
+}
+
+.card{
+    background:white;
+    border-radius:28px;
+    transition:0.3s;
+}
+
+.card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+}
+
+.teal{
+    color:#259e8d;
+}
+
+.bg-teal{
+    background:#259e8d;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<section class="px-6 py-20">
+
+<div class="max-w-6xl mx-auto">
+
+<!-- HEADER -->
+<div class="text-center mb-16">
+
+<h1 class="text-5xl font-extrabold text-slate-800 mb-5">
+IoT Pipeline Architecture
+</h1>
+
+<p class="text-slate-500 max-w-3xl mx-auto leading-8">
+Sistem Smart EKG menggunakan arsitektur Internet of Things (IoT) untuk melakukan monitoring kesehatan jantung secara realtime dari perangkat sensor menuju cloud database dan aplikasi monitoring.
+</p>
+
+</div>
+
+<!-- FLOW -->
+<div class="card p-10 mb-14">
+
+<h2 class="text-3xl font-bold mb-10 text-center teal">
+Alur Sistem IoT
+</h2>
+
+<div class="grid md:grid-cols-5 gap-6 items-center text-center">
+
+<div>
+<div class="text-6xl mb-4">❤️</div>
+<h3 class="font-bold">Olimex ECG</h3>
+<p class="text-sm text-slate-500 mt-2">
+Akuisisi sinyal EKG
+</p>
+</div>
+
+<div class="text-4xl text-slate-300">
+→
+</div>
+
+<div>
+<div class="text-6xl mb-4">🖥️</div>
+<h3 class="font-bold">Arduino UNO</h3>
+<p class="text-sm text-slate-500 mt-2">
+Signal Processing
+</p>
+</div>
+
+<div class="text-4xl text-slate-300">
+→
+</div>
+
+<div>
+<div class="text-6xl mb-4">📶</div>
+<h3 class="font-bold">ESP32 Gateway</h3>
+<p class="text-sm text-slate-500 mt-2">
+Wireless Communication
+</p>
+</div>
+
+</div>
+
+<div class="flex justify-center text-4xl text-slate-300 my-8">
+↓
+</div>
+
+<div class="grid md:grid-cols-3 gap-6 text-center">
+
+<div class="card p-8">
+<div class="text-5xl mb-4">☁️</div>
+<h3 class="font-bold text-xl">
+Firebase Cloud
+</h3>
+
+<p class="text-slate-500 mt-3 leading-7">
+Database cloud digunakan untuk menyimpan data monitoring pasien dan hasil rekaman EKG secara realtime.
+</p>
+</div>
+
+<div class="card p-8">
+<div class="text-5xl mb-4">🔒</div>
+<h3 class="font-bold text-xl">
+HTTPS Security
+</h3>
+
+<p class="text-slate-500 mt-3 leading-7">
+Komunikasi data menggunakan protokol HTTP/HTTPS untuk menjaga keamanan data monitoring pasien.
+</p>
+</div>
+
+<div class="card p-8">
+<div class="text-5xl mb-4">📱</div>
+<h3 class="font-bold text-xl">
+Mobile Monitoring
+</h3>
+
+<p class="text-slate-500 mt-3 leading-7">
+Aplikasi monitoring digunakan untuk menampilkan BPM, grafik EKG, dan hasil deteksi aritmia.
+</p>
+</div>
+
+</div>
+
+</div>
+
+<!-- FEATURES -->
+<div class="grid md:grid-cols-2 gap-8">
+
+<div class="card p-10">
+
+<h2 class="text-3xl font-bold mb-6 teal">
+Fitur IoT
+</h2>
+
+<ul class="space-y-5 text-slate-500 leading-8">
+
+<li>✅ Realtime ECG Monitoring</li>
+<li>✅ ESP32 Wireless Gateway</li>
+<li>✅ Cloud Synchronization</li>
+<li>✅ Firebase Realtime Database</li>
+<li>✅ Distributed System Support</li>
+<li>✅ Offline Buffer Storage</li>
+
+</ul>
+
+</div>
+
+<div class="card p-10">
+
+<h2 class="text-3xl font-bold mb-6 teal">
+Distributed System
+</h2>
+
+<p class="text-slate-500 leading-8 mb-5">
+
+Sistem dirancang agar tetap dapat berjalan dalam kondisi offline maupun online. Ketika koneksi internet terputus, data akan disimpan sementara secara lokal dan dikirim kembali ke cloud ketika koneksi tersedia.
+
+</p>
+
+<div class="bg-[#eefaf6] rounded-2xl p-6">
+
+<p class="font-semibold text-slate-700 mb-3">
+Offline Mode
+</p>
+
+<p class="text-slate-500 text-sm leading-7">
+Data disimpan sementara pada local buffer storage.
+</p>
+
+<hr class="my-5">
+
+<p class="font-semibold text-slate-700 mb-3">
+Online Mode
+</p>
+
+<p class="text-slate-500 text-sm leading-7">
+Data otomatis disinkronkan ke Firebase Cloud.
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+</body>
+</html>

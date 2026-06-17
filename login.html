@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masuk - Smart ECG Portal</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+    
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tealapp: '#259e8d', 
+                        tealhover: '#1e8576',
+                        lightbg: '#f4f6f8' 
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #ffffff; color: #334155; scroll-behavior: smooth; }
+        .form-input {
+            background-color: #f4f6f8;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .form-input:focus {
+            border-color: rgba(37, 158, 141, 0.3);
+            background-color: #ffffff;
+            box-shadow: 0 4px 15px rgba(37, 158, 141, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6 font-sans text-slate-800 antialiased">
+
+    <div x-data="authHandler()" class="w-full max-w-sm text-center">
+        
+        <div class="flex justify-center mb-8">
+            <svg class="w-20 h-20 text-tealapp" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+        </div>
+        
+        <div class="mb-8">
+            <h2 class="text-3xl font-semibold mb-2">Selamat Datang</h2>
+            <p class="text-slate-500 text-sm leading-relaxed">Masuk ke Portal Administrator Sistem EKG</p>
+        </div>
+        
+        <div class="space-y-4 text-left">
+            
+            <input type="text" x-model="loginId" placeholder="Username" 
+                   class="form-input w-full p-4 rounded-2xl outline-none text-sm font-medium text-slate-800 placeholder:text-slate-400">
+            
+            <!-- PASSWORD FIELD -->
+            <div class="relative">
+                <input :type="showPassword ? 'text' : 'password'" x-model="password" placeholder="Kata Sandi" 
+                       class="form-input w-full p-4 rounded-2xl outline-none text-sm font-medium text-slate-800 placeholder:text-slate-400 pr-12">
+                <svg @click="showPassword = !showPassword" class="w-5 h-5 absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 cursor-pointer hover:text-tealapp transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path x-show="!showPassword" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path x-show="!showPassword" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    <path x-show="showPassword" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                </svg>
+            </div>
+
+            <!-- Pesan Error -->
+            <div x-show="errorMessage" x-transition class="text-xs font-bold text-rose-500 bg-rose-50 p-3 rounded-xl border border-rose-100">
+                <span x-text="errorMessage"></span>
+            </div>
+
+            <div class="flex items-center gap-2 pt-2">
+                <input type="checkbox" id="remember" class="w-4 h-4 rounded text-tealapp focus:ring-tealapp cursor-pointer accent-tealapp border-slate-300">
+                <label for="remember" class="text-sm text-slate-600 cursor-pointer font-medium">Ingat Saya</label>
+            </div>
+
+            <button @click="processLogin()" 
+                    :disabled="isLoading"
+                    class="w-full bg-tealapp hover:bg-tealhover text-white py-4 rounded-full font-bold text-sm shadow-lg shadow-tealapp/30 active:scale-[0.98] transition-all mt-4 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                <span x-show="isLoading" class="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin"></span>
+                <span x-text="isLoading ? 'Memverifikasi...' : 'Masuk Sekarang'"></span>
+            </button>
+        </div>
+        
+        <div class="mt-6">
+            <a href="index.html" class="text-slate-400 hover:text-slate-600 font-semibold text-xs transition-colors">
+                Kembali ke Beranda
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function authHandler() {
+            return {
+                isLoading: false,
+                errorMessage: '',
+                showPassword: false,
+                
+                loginId: '',
+                password: '',
+
+                init() {
+                    const config = {
+                        apiKey: "AIzaSyD7cegeyQVu5d0cRkv1dyAjzXWOz8gE-HM",
+                        authDomain: "smart-ekg-tmj-6b.firebaseapp.com",
+                        databaseURL: "https://smart-ekg-tmj-6b-default-rtdb.asia-southeast1.firebasedatabase.app",
+                        projectId: "smart-ekg-tmj-6b"
+                    };
+                    if (!firebase.apps.length) firebase.initializeApp(config);
+                    
+                    // Bersihkan sesi lama saat membuka halaman login
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('username');
+                },
+
+                async processLogin() {
+                    this.errorMessage = '';
+                    
+                    if (!this.loginId || !this.password) {
+                        this.errorMessage = "Username dan Kata Sandi tidak boleh kosong.";
+                        return;
+                    }
+
+                    this.isLoading = true;
+
+                    try {
+                        // Kredensial Khusus Admin
+                        if ((this.loginId === 'adminekg' || this.loginId === 'admin') && this.password === 'smartekg') {
+                            localStorage.setItem('userId', 'admin');
+                            localStorage.setItem('username', 'adminekg');
+                            setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+                            return;
+                        }
+
+                        // Pencarian ke Database (Opsional, jika nanti ada user selain admin yang ditambah dari database)
+                        const dbRef = firebase.database().ref('users');
+                        const snapshot = await dbRef.once('value');
+                        const users = snapshot.val();
+                        let userFound = false;
+                        let passwordMatch = false;
+                        let loggedInUserId = '';
+                        let loggedInUsername = '';
+
+                        if (users) {
+                            for (let key in users) {
+                                const u = users[key];
+                                if (u.username === this.loginId || u.email === this.loginId) {
+                                    userFound = true;
+                                    if (u.password === this.password) {
+                                        passwordMatch = true;
+                                        loggedInUserId = key; 
+                                        loggedInUsername = u.username;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!userFound || !passwordMatch) {
+                            throw new Error("Kredensial tidak valid. Silakan periksa kembali.");
+                        }
+
+                        localStorage.setItem('userId', loggedInUserId);
+                        localStorage.setItem('username', loggedInUsername);
+
+                        setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+
+                    } catch (error) {
+                        this.errorMessage = error.message;
+                        this.isLoading = false;
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>

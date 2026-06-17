@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart EKG - JantungKuSehat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        .card { border-radius: 30px; padding: 2rem; }
+    </style>
+</head>
+
+<body x-data="pasienMasterApp()">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-5xl font-black uppercase italic tracking-tighter text-slate-900">Data Implementasi</h1>
+                <p class="text-slate-400 mt-2 font-semibold">Daftar Pasien & Hasil Diagnosa EKG Terintegrasi</p>
+            </div>
+            <div class="px-5 py-2 rounded-full font-black text-sm shadow-sm bg-green-100 text-green-700" x-text="'DB: CONNECTED'"></div>
+        </div>
+
+        <div class="card">
+            
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-slate-400">🔍</span>
+                        <input type="text" x-model="searchQuery" placeholder="Cari nama pasien..." 
+                               class="pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:border-blue-500 w-full md:w-64">
+                    </div>
+
+                    <select x-model="filterResult" class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer">
+                        <option value="">Semua Diagnosa</option>
+                        <option value="NORMAL">Normal</option>
+                        <option value="ARITMIA">Aritmia</option>
+                        <option value="TAKIKARDIA">Takikardia</option>
+                        <option value="BRADIKARDIA">Bradikardia</option>
+                    </select>
+
+                    <input type="date" x-model="filterDate" 
+                           class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer text-slate-500">
+                    
+                    <button @click="resetFilters()" x-show="searchQuery || filterResult || filterDate" 
+                            class="text-xs font-bold text-red-500 hover:text-red-700 px-2 transition-colors">
+                        ✖ Reset
+                    </button>
+                </div>
+
+                <button @click="exportToCSV()" 
+                        class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-xs font-black tracking-widest transition-all shadow-sm flex items-center justify-center gap-2">
+                    📥 EXPORT CSV
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-slate-400 uppercase text-[10px] tracking-widest border-b border-slate-100">
+                            <th class="pb-4 pl-4">No</th>
+                            <th class="pb-4">Nama Lengkap</th>
+                            <th class="pb-4">Gender</th>
+                            <th class="pb-4">Umur</th>
+                            <th class="pb-4">TB / BB</th>
+                            <th class="pb-4">Avg BPM</th>
+                            <th class="pb-4">Diagnosa AI</th>
+                            <th class="pb-4">Waktu Rekam</th>
+                            <th class="pb-4 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="font-bold text-slate-700">
+                        <template x-if="loading">
+                            <tr><td colspan="9" class="py-8 text-center text-slate-400 italic">Sinkronisasi indeks data...</td></tr>
+                        </template>
+                        
+                        <template x-if="!loading && filteredPasien.length === 0">
+                            <tr><td colspan="9" class="py-8 text-center text-slate-400 italic">Tidak ada data pasien yang sesuai kriteria.</td></tr>
+                        </template>
+
+                        <template x-for="(pasien, index) in filteredPasien" :key="pasien.id">
+                            <tr class="border-b border-slate-50 hover:bg-slate-50/80 transition-colors">
+                                <td class="py-5 pl-4 text-slate-400 text-sm" x-text="index + 1"></td>
+                                <td class="py-5 text-slate-900 text-sm" x-text="pasien.nama"></td>
+                                <td class="py-5 text-sm text-slate-500" x-text="pasien.jk"></td>
+                                <td class="py-5 text-sm text-slate-600" x-text="pasien.umur ? pasien.umur + ' Thn' : '-'"></td>
+                                <td class="py-5 text-sm text-slate-600" x-text="(pasien.tb || '-') + ' cm / ' + (pasien.bb || '-') + ' Kg'"></td>
+                                <td class="py-5 text-sm font-mono" x-text="pasien.avg_bpm + ' BPM'"></td>
+                                <td class="py-5">
+                                    <span class="px-4 py-1.5 rounded-full text-xs font-black tracking-wide"
+                                          :class="{
+                                              'bg-blue-100 text-blue-700': pasien.result === 'NORMAL',
+                                              'bg-red-100 text-red-700': pasien.result === 'ARITMIA',
+                                              'bg-yellow-100 text-yellow-700': ['TAKIKARDIA', 'BRADIKARDIA'].includes(pasien.result)
+                                          }" x-text="pasien.result"></span>
+                                </td>
+                                <td class="py-5 font-normal text-slate-400 text-sm" x-text="formatDate(pasien.timestamp)"></td>
+                                <td class="py-5 text-center">
+                                    <a :href="'details.html?id=' + pasien.id + '&userId=' + pasien.userId" 
+                                       class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm">
+                                        🔍 LIHAT DETAIL
+                                    </a>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="mt-4 text-xs font-bold text-slate-400 text-right" x-show="!loading">
+                Menampilkan <span class="text-blue-600" x-text="filteredPasien.length"></span> dari <span x-text="pasienList.length"></span> total riwayat
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            // Jika parsing gagal, kembalikan string aslinya (contoh: "18 May 2026, 14:44")
+            if (isNaN(date.getTime())) return dateString; 
+            return date.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB';
+        }
+
+        function pasienMasterApp() {
+            return {
+                pasienList: [], 
+                loading: true,
+                
+                searchQuery: '',
+                filterResult: '',
+                filterDate: '',
+
+                init() {
+                    const config = {
+                        apiKey: "AIzaSyD7cegeyQVu5d0cRkv1dyAjzXWOz8gE-HM",
+                        authDomain: "smart-ekg-tmj-6b.firebaseapp.com",
+                        databaseURL: "https://smart-ekg-tmj-6b-default-rtdb.asia-southeast1.firebasedatabase.app",
+                        projectId: "smart-ekg-tmj-6b"
+                    };
+                    if (!firebase.apps.length) firebase.initializeApp(config);
+                    
+                    // Mengubah referensi menjadi history_records sesuai instruksi
+                    firebase.database().ref('history_records').on('value', (snapshot) => {
+                        this.loading = true;
+                        const data = snapshot.val();
+                        if (!data) { this.pasienList = []; this.loading = false; return; }
+                        
+                        const arr = [];
+                        
+                        // Iterasi level pertama: User ID (contoh: PwUiY12r2kR...)
+                        Object.keys(data).forEach(userId => {
+                            const userRecords = data[userId];
+                            
+                            if (typeof userRecords === 'object' && userRecords !== null) {
+                                // Iterasi level kedua: Record ID (contoh: -Osu1gRvKx...)
+                                Object.keys(userRecords).forEach(recordId => {
+                                    const record = userRecords[recordId];
+                                    
+                                    arr.push({ 
+                                        id: recordId, 
+                                        userId: userId, // Menyimpan ID user untuk referensi halaman details
+                                        nama: record.username || 'Belum Diisi',
+                                        avg_bpm: record.bpm || '-',
+                                        result: record.statusML ? record.statusML.toUpperCase() : '-',
+                                        timestamp: record.timestamp || null,
+                                        jk: record.jk || '-',
+                                        umur: record.umur || '',
+                                        tb: record.tb || '',
+                                        bb: record.bb || ''
+                                    }); 
+                                });
+                            }
+                        });
+                        
+                        this.pasienList = arr.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                        this.loading = false;
+                    });
+                },
+
+                get filteredPasien() {
+                    return this.pasienList.filter(pasien => {
+                        const namaPasien = (pasien.nama || '').toLowerCase();
+                        const matchName = namaPasien.includes(this.searchQuery.toLowerCase());
+                        
+                        const matchResult = this.filterResult === '' || pasien.result === this.filterResult;
+                        
+                        let matchDate = true;
+                        if (this.filterDate) {
+                            if (pasien.timestamp) {
+                                const d = new Date(pasien.timestamp);
+                                if (!isNaN(d.getTime())) {
+                                    const year = d.getFullYear();
+                                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                                    const day = String(d.getDate()).padStart(2, '0');
+                                    const pDate = `${year}-${month}-${day}`;
+                                    matchDate = pDate === this.filterDate;
+                                } else {
+                                    matchDate = false;
+                                }
+                            } else {
+                                matchDate = false;
+                            }
+                        }
+
+                        return matchName && matchResult && matchDate;
+                    });
+                },
+
+                resetFilters() {
+                    this.searchQuery = '';
+                    this.filterResult = '';
+                    this.filterDate = '';
+                },
+
+                exportToCSV() {
+                    if (this.filteredPasien.length === 0) {
+                        alert("Tidak ada data untuk dieksport!");
+                        return;
+                    }
+
+                    const headers = ['No', 'Nama Lengkap', 'Jenis Kelamin', 'Umur', 'Tinggi Badan (cm)', 'Berat Badan (Kg)', 'Rata-Rata BPM', 'Diagnosa AI', 'Waktu Rekam'];
+                    const csvRows = [];
+                    csvRows.push(headers.join(','));
+
+                    this.filteredPasien.forEach((p, index) => {
+                        const no = index + 1;
+                        const nama = `"${p.nama || 'Belum Diisi'}"`; 
+                        const jk = p.jk || '-';
+                        const umur = p.umur || '-';
+                        const tb = p.tb || '-';
+                        const bb = p.bb || '-';
+                        const bpm = p.avg_bpm || '-';
+                        const result = p.result || '-';
+                        const waktu = `"${formatDate(p.timestamp)}"`;
+
+                        const rowData = [no, nama, jk, umur, tb, bb, bpm, result, waktu];
+                        csvRows.push(rowData.join(','));
+                    });
+
+                    const csvString = csvRows.join('\n');
+                    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+                    
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    
+                    const fileNameDate = new Date().toISOString().split('T')[0];
+                    link.setAttribute('download', `Data_Pasien_SmartEKG_${fileNameDate}.csv`);
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

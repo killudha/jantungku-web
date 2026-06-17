@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Smart ECG System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; }
+        
+        .sidebar {
+            background: #cce7e7;
+            width: 280px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .main-container {
+            margin-left: 280px;
+            height: 100vh;
+            width: calc(100% - 280px);
+            background-color: #f4f6f8;
+            padding: 1.5rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            width: 90%;
+            margin-left: 1rem;
+            padding: 14px 20px;
+            margin-bottom: 8px;
+            border-radius: 16px;
+            color: #353536;
+            font-weight: 600;
+            font-size: 0.875rem;
+            letter-spacing: 0.1em;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        .nav-btn.active {
+            background-color: rgba(37, 158, 141, 0.1);
+            color: #259e8d;
+            border-right: 4px solid #259e8d;
+            border-radius: 16px 0 0 16px;
+        }
+
+        .nav-btn:hover:not(.active) {
+            background-color: #f8fafc;
+            color: #334155;
+        }
+
+        .content-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+    </style>
+</head>
+<body x-data="dashboardManager()" class="antialiased text-slate-800">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar p-6 flex flex-col">
+        <div class="mb-10 px-4 mt-2">
+            <a href="index.html" class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" style="text-decoration: none;">
+                <svg class="w-8 h-8 text-tealapp" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+                <div class="flex flex-col">
+                    <h1 class="text-xl font-bold text-slate-800 leading-tight">Smart<span class="text-[#259e8d]">ECG</span></h1>
+                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Portal Klinik</span>
+                </div>
+            </a>
+        </div>
+
+        <nav class="flex-1 mt-4">
+            <!-- Halaman Utama Baru: System Pulse -->
+            <button @click="setPage('menu/info.html')" 
+                    :class="currentPage === 'menu/info.html' ? 'nav-btn active' : 'nav-btn'">
+                <span class="mr-4 text-xl opacity-80">⚡</span> System Pulse
+            </button>
+
+            <button @click="setPage('menu/monitoring.html')" 
+                    :class="currentPage === 'menu/monitoring.html' ? 'nav-btn active' : 'nav-btn'">
+                <span class="mr-4 text-xl opacity-80">📡</span> Monitoring Live
+            </button>
+
+            <button @click="setPage('menu/pasien.html')" 
+                    :class="currentPage === 'menu/pasien.html' ? 'nav-btn active' : 'nav-btn'">
+                <span class="mr-4 text-xl opacity-80">📂</span> Data Pasien
+            </button>
+
+            <button @click="setPage('menu/log.html')" 
+                    :class="currentPage === 'menu/log.html' ? 'nav-btn active' : 'nav-btn'">
+                <span class="mr-4 text-xl opacity-80">📋</span> Catatan Sistem
+            </button>
+
+            <button @click="setPage('menu/profile.html')" 
+                    :class="currentPage === 'menu/profile.html' ? 'nav-btn active' : 'nav-btn'">
+                <span class="mr-4 text-xl opacity-80">👤</span> Profil Medis
+            </button>
+
+            <button @click="setPage('menu/team.html')" 
+                    :class="currentPage === 'menu/team.html' ? 'nav-btn active' : 'nav-btn'">
+                <span class="mr-4 text-xl opacity-80">👥</span> Tim Pengembang
+            </button>
+        </nav>
+
+        <a href="index.html" 
+           class="w-full py-4 text-center bg-rose-50 text-rose-500 rounded-2xl font-bold hover:bg-rose-500 hover:text-white transition-colors text-sm mt-auto block border border-rose-100">
+            Keluar Sistem
+        </a>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="main-container">
+        <iframe :src="currentPage" class="content-frame" name="mainFrame"></iframe>
+    </main>
+
+    <script>
+        function dashboardManager() {
+            return {
+                currentPage: 'menu/info.html', // Set default ke halaman baru
+                setPage(url) {
+                    this.currentPage = url;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

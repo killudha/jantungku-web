@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>Smart EKG - JantungKuSehat</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+<style>
+
+body{
+    font-family: 'Inter', sans-serif;
+    background:#cce7e7;
+    color:#334155;
+    scroll-behavior:smooth;
+}
+
+.teal{
+    color:#15554c;
+}
+
+.bg-teal{
+    background:#259e8d;
+}
+
+.card-soft{
+    background:#f4f6f8;
+    border-radius:28px;
+    transition:0.3s ease;
+}
+
+.card-soft:hover{
+    transform:translateY(-5px);
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+
+.hero-gradient{
+    background:
+    radial-gradient(circle at top left, rgba(37,158,141,0.15), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(37,158,141,0.15), transparent 30%);
+}
+
+.glow{
+    box-shadow:0 0 30px rgba(37,158,141,0.4);
+}
+
+.ecg-line{
+    width:100%;
+    height:80px;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+    100% { transform: scale(1); }
+}
+
+.pulse{
+    animation:pulse 2s infinite;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
+
+    <div class="flex items-center gap-3">
+
+        <div class="w-12 h-12 rounded-2xl bg-teal flex items-center justify-center glow">
+
+            ❤️
+
+        </div>
+
+        <div>
+            <h1 class="font-bold text-xl text-slate-800">
+                Smart EKG
+            </h1>
+
+            <p class="text-sm text-slate-500">
+                JantungKuSehat
+            </p>
+        </div>
+    </div>
+
+    <div class="hidden md:flex items-center gap-8 text-slate-600 font-medium">
+
+        <a href="#about" class="hover:text-[#259e8d]">Tentang</a>
+        <a href="#features" class="hover:text-[#259e8d]">Fitur</a>
+        <a href="#education" class="hover:text-[#259e8d]">Edukasi</a>
+        <a href="#team" class="hover:text-[#259e8d]">Tim</a>
+
+        <a href="login.html"
+        class="px-6 py-3 rounded-full bg-teal text-white font-semibold hover:opacity-90">
+        Masuk
+        </a>
+
+    </div>
+
+</nav>
+
+<!-- HERO -->
+<section class="hero-gradient px-6 pt-20 pb-24">
+
+    <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+
+        <!-- LEFT -->
+        <div>
+
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#e8f6f3] text-[#259e8d] font-semibold text-sm mb-6">
+
+                ⚡ AI + IoT Heart Monitoring System
+
+            </div>
+
+            <h1 class="text-5xl md:text-6xl font-extrabold leading-tight text-slate-800 mb-6">
+
+                Smart Portable
+                <span class="teal">
+                    ECG Monitoring
+                </span>
+
+            </h1>
+
+            <p class="text-slate-500 text-lg leading-relaxed mb-10">
+
+                Sistem monitoring kesehatan jantung berbasis IoT dan Artificial Intelligence untuk mendeteksi kemungkinan aritmia secara realtime menggunakan teknologi EKG portable dan cloud monitoring.
+
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-4">
+
+                <a href="login.html"
+                class="px-8 py-4 rounded-full bg-teal text-white font-bold text-center glow">
+
+                Mulai Monitoring
+
+                </a>
+
+                <a href="#features"
+                class="px-8 py-4 rounded-full bg-[#f4f6f8] text-slate-700 font-semibold text-center">
+
+                Pelajari Sistem
+
+                </a>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div class="relative">
+
+            <div class="card-soft p-8 pulse">
+
+                <img
+                src="https://cdn-icons-png.flaticon.com/512/2382/2382461.png"
+                class="w-72 mx-auto">
+
+                <div class="mt-8 grid grid-cols-2 gap-4">
+
+                    <div class="bg-white rounded-2xl p-4 text-center">
+
+                        <h3 class="text-3xl font-bold teal">
+                            72
+                        </h3>
+
+                        <p class="text-sm text-slate-500">
+                            BPM
+                        </p>
+
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 text-center">
+
+                        <h3 class="text-2xl font-bold text-green-500">
+                            Normal
+                        </h3>
+
+                        <p class="text-sm text-slate-500">
+                            AI Status
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ABOUT -->
+<section id="about" class="px-6 py-24">
+
+    <div class="max-w-6xl mx-auto">
+
+        <div class="text-center mb-16">
+
+            <h2 class="text-4xl font-bold mb-4 text-slate-800">
+
+                Apa itu Smart EKG?
+
+            </h2>
+
+            <p class="text-slate-500 max-w-3xl mx-auto leading-relaxed">
+
+                Smart EKG merupakan sistem monitoring kesehatan jantung berbasis Internet of Things (IoT) yang mampu melakukan akuisisi sinyal EKG secara realtime serta mendeteksi kemungkinan gangguan irama jantung menggunakan Artificial Intelligence.
+
+            </p>
+
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+
+            <div class="card-soft p-8">
+
+                <div class="text-5xl mb-5">
+                    ❤️
+                </div>
+
+                <h3 class="font-bold text-xl mb-4">
+                    Monitoring Realtime
+                </h3>
+
+                <p class="text-slate-500 leading-relaxed">
+
+                    Sistem memantau sinyal elektrokardiogram secara realtime menggunakan sensor ECG portable berbasis IoT.
+
+                </p>
+
+            </div>
+
+            <div class="card-soft p-8">
+
+                <div class="text-5xl mb-5">
+                    🧠
+                </div>
+
+                <h3 class="font-bold text-xl mb-4">
+                    AI Detection
+                </h3>
+
+                <p class="text-slate-500 leading-relaxed">
+
+                    Model Artificial Intelligence digunakan untuk mendeteksi kemungkinan aritmia berdasarkan pola sinyal EKG pengguna.
+
+                </p>
+
+            </div>
+
+            <div class="card-soft p-8">
+
+                <div class="text-5xl mb-5">
+                    ☁️
+                </div>
+
+                <h3 class="font-bold text-xl mb-4">
+                    Cloud Integration
+                </h3>
+
+                <p class="text-slate-500 leading-relaxed">
+
+                    Data monitoring tersimpan secara aman pada cloud database sehingga dapat diakses melalui aplikasi mobile.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="bg-[#f8fafc] px-6 py-24">
+
+<div class="max-w-6xl mx-auto">
+
+<div class="text-center mb-16">
+
+<h2 class="text-4xl font-bold text-slate-800 mb-4">
+Fitur Sistem
+</h2>
+
+<p class="text-slate-500">
+Teknologi utama pada sistem Smart EKG
+</p>
+
+</div>
+
+<div class="grid md:grid-cols-3 gap-8">
+
+<!-- IOT -->
+<a href="iot.html" class="card-soft p-8 block">
+
+<div class="text-5xl mb-5">
+📡
+</div>
+
+<h3 class="text-2xl font-bold mb-4">
+IoT Pipeline
+</h3>
+
+<p class="text-slate-500 leading-relaxed">
+
+Sistem Smart EKG menggunakan arsitektur Internet of Things (IoT) untuk melakukan monitoring jantung secara realtime dari perangkat sensor menuju cloud database dan aplikasi mobile.
+
+</p>
+
+<ul class="mt-5 text-sm text-slate-500 leading-8">
+
+<li>• Olimex ECG Sensor</li>
+<li>• Arduino UNO</li>
+<li>• ESP32 Gateway</li>
+<li>• Firebase Cloud</li>
+<li>• HTTP / HTTPS Communication</li>
+<li>• Realtime Monitoring</li>
+
+</ul>
+
+<!-- MINI FLOW -->
+<div class="mt-8 bg-white rounded-2xl p-5">
+
+<div class="flex items-center justify-between text-xs text-slate-500 font-semibold">
+
+<div class="text-center">
+❤️
+<p class="mt-2">Sensor</p>
+</div>
+
+→
+
+<div class="text-center">
+📶
+<p class="mt-2">ESP32</p>
+</div>
+
+→
+
+<div class="text-center">
+☁️
+<p class="mt-2">Firebase</p>
+</div>
+
+→
+
+<div class="text-center">
+📱
+<p class="mt-2">App</p>
+</div>
+
+</div>
+
+</div>
+
+</a>
+
+<!-- AI -->
+<a href="ai.html" class="card-soft p-8 block">
+
+<div class="text-5xl mb-5">
+🧠
+</div>
+
+<h3 class="text-2xl font-bold mb-4">
+AI Inference
+</h3>
+
+<p class="text-slate-500 leading-relaxed">
+
+Model 1D-CNN digunakan untuk mendeteksi pola abnormal pada sinyal EKG dan melakukan klasifikasi aritmia.
+
+</p>
+
+<ul class="mt-5 text-sm text-slate-500 leading-7">
+
+<li>• 1D CNN Model</li>
+<li>• MIT-BIH Dataset</li>
+<li>• Deep Learning</li>
+<li>• Real-time Prediction</li>
+
+</ul>
+
+</a>
+
+<!-- CLINICAL -->
+<a href="clinical.html" class="card-soft p-8 block">
+
+<div class="text-5xl mb-5">
+📈
+</div>
+
+<h3 class="text-2xl font-bold mb-4">
+Clinical UI
+</h3>
+
+<p class="text-slate-500 leading-relaxed">
+
+Antarmuka monitoring medis menampilkan grafik EKG, BPM, status pasien, dan hasil klasifikasi AI.
+
+</p>
+
+<ul class="mt-5 text-sm text-slate-500 leading-7">
+
+<li>• ECG Visualization</li>
+<li>• BPM Monitoring</li>
+<li>• Medical Dashboard</li>
+<li>• Patient History</li>
+
+</ul>
+
+</a>
+
+</div>
+
+</div>
+</section>
+
+<!-- EDUCATION -->
+<section id="education" class="px-6 py-24">
+
+<div class="max-w-6xl mx-auto">
+
+<div class="text-center mb-16">
+
+<h2 class="text-4xl font-bold text-slate-800 mb-4">
+Edukasi Kesehatan Jantung
+</h2>
+
+<p class="text-slate-500 max-w-3xl mx-auto leading-relaxed">
+Penyakit jantung merupakan salah satu penyebab kematian tertinggi di dunia. 
+Deteksi dini terhadap gangguan irama jantung sangat penting untuk mencegah komplikasi serius seperti gagal jantung dan serangan jantung mendadak.
+</p>
+
+</div>
+
+<div class="grid md:grid-cols-2 gap-8">
+
+<!-- LEFT -->
+<div class="card-soft p-8">
+
+<h3 class="text-2xl font-bold mb-5 text-[#259e8d]">
+Apa itu Elektrokardiogram (EKG)?
+</h3>
+
+<p class="text-slate-500 leading-8 mb-6">
+
+Elektrokardiogram (EKG) merupakan metode pemeriksaan medis yang digunakan untuk merekam aktivitas listrik jantung. 
+Pemeriksaan ini membantu dokter mengetahui kondisi irama jantung, denyut jantung, serta kemungkinan adanya gangguan kardiovaskular.
+
+</p>
+
+<p class="text-slate-500 leading-8 mb-6">
+
+Sinyal EKG terdiri dari gelombang listrik yang menggambarkan proses kontraksi dan relaksasi jantung. 
+Perubahan pola gelombang EKG dapat menjadi indikasi adanya gangguan kesehatan tertentu seperti aritmia atau gangguan konduksi listrik jantung.
+
+</p>
+
+<h3 class="text-2xl font-bold mb-5 text-[#259e8d]">
+Apa itu Aritmia?
+</h3>
+
+<p class="text-slate-500 leading-8">
+
+Aritmia merupakan kondisi ketika detak jantung berdetak terlalu cepat, terlalu lambat, atau tidak teratur. 
+Kondisi ini dapat menyebabkan pusing, sesak napas, nyeri dada, bahkan kehilangan kesadaran apabila tidak ditangani dengan baik.
+
+</p>
+
+</div>
+
+<!-- RIGHT -->
+<div class="card-soft p-8">
+
+<h3 class="text-2xl font-bold mb-5 text-[#259e8d]">
+Jenis Gangguan Irama Jantung
+</h3>
+
+<div class="space-y-6 text-slate-500 leading-8">
+
+<div>
+<h4 class="font-bold text-slate-700">
+❤️ Bradycardia
+</h4>
+
+<p>
+Kondisi ketika detak jantung terlalu lambat, biasanya di bawah 60 BPM.
+</p>
+</div>
+
+<div>
+<h4 class="font-bold text-slate-700">
+❤️ Tachycardia
+</h4>
+
+<p>
+Kondisi ketika detak jantung terlalu cepat dan dapat menyebabkan jantung bekerja lebih berat.
+</p>
+</div>
+
+<div>
+<h4 class="font-bold text-slate-700">
+❤️ Atrial Fibrillation
+</h4>
+
+<p>
+Gangguan irama jantung tidak teratur akibat aktivitas listrik abnormal pada atrium jantung.
+</p>
+</div>
+
+</div>
+
+<h3 class="text-2xl font-bold mt-10 mb-5 text-[#259e8d]">
+Cara Menjaga Kesehatan Jantung
+</h3>
+
+<ul class="text-slate-500 leading-8">
+
+<li>✅ Rutin melakukan olahraga</li>
+<li>✅ Mengonsumsi makanan bergizi</li>
+<li>✅ Mengurangi stres berlebih</li>
+<li>✅ Menghindari rokok dan alkohol</li>
+<li>✅ Tidur dan istirahat yang cukup</li>
+<li>✅ Melakukan pemeriksaan kesehatan secara berkala</li>
+
+</ul>
+
+</div>
+
+</div>
+
+</div>
+</section>
+
+<!-- REFERENCES -->
+<section class="px-6 py-20">
+
+<div class="max-w-5xl mx-auto">
+
+<div class="text-center mb-14">
+
+<h2 class="text-4xl font-bold text-slate-800 mb-4">
+Sumber Edukasi Kesehatan
+</h2>
+
+<p class="text-slate-500 max-w-2xl mx-auto leading-8">
+Informasi mengenai kesehatan jantung, penyakit kardiovaskular, gejala, pencegahan, dan pola hidup sehat dapat dipelajari lebih lanjut melalui sumber berikut.
+</p>
+
+</div>
+
+<div class="grid md:grid-cols-2 gap-8">
+
+<!-- HALODOC -->
+<div class="card-soft p-8">
+
+<div class="flex items-center gap-4 mb-5">
+
+<div class="w-14 h-14 rounded-2xl bg-[#259e8d]/10 flex items-center justify-center text-3xl">
+❤️
+</div>
+
+<div>
+
+<h3 class="text-2xl font-bold text-slate-800">
+Halodoc
+</h3>
+
+<p class="text-slate-500 text-sm">
+Edukasi kesehatan jantung dan penyakit kardiovaskular
+</p>
+
+</div>
+
+</div>
+
+<p class="text-slate-500 leading-8 mb-6">
+Menyediakan informasi mengenai penyakit jantung, faktor risiko, gejala, diagnosis, serta pencegahan gangguan kesehatan jantung.
+</p>
+
+<a
+href="https://www.halodoc.com/kesehatan/penyakit-jantung"
+target="_blank"
+class="inline-block px-6 py-3 rounded-full bg-[#259e8d] text-white font-semibold hover:opacity-90 transition">
+
+Kunjungi Halodoc
+
+</a>
+
+</div>
+
+<!-- ALODOKTER -->
+<div class="card-soft p-8">
+
+<div class="flex items-center gap-4 mb-5">
+
+<div class="w-14 h-14 rounded-2xl bg-[#259e8d]/10 flex items-center justify-center text-3xl">
+🩺
+</div>
+
+<div>
+
+<h3 class="text-2xl font-bold text-slate-800">
+Alodokter
+</h3>
+
+<p class="text-slate-500 text-sm">
+Informasi medis dan penyakit jantung
+</p>
+
+</div>
+
+</div>
+
+<p class="text-slate-500 leading-8 mb-6">
+Berisi penjelasan lengkap mengenai penyakit jantung, aritmia, penyebab, pengobatan, hingga langkah pencegahan untuk menjaga kesehatan jantung.
+</p>
+
+<a
+href="https://www.alodokter.com/penyakit-jantung"
+target="_blank"
+class="inline-block px-6 py-3 rounded-full bg-[#259e8d] text-white font-semibold hover:opacity-90 transition">
+
+Kunjungi Alodokter
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- TEAM -->
+<section id="team" class="px-6 py-24 bg-white border-t border-slate-100">
+
+<div class="max-w-6xl mx-auto">
+
+<!-- TITLE -->
+<div class="text-center mb-16">
+
+<h2 class="text-4xl font-bold text-slate-800 mb-4">
+Tim Pengembang
+</h2>
+
+<p class="text-slate-500 max-w-2xl mx-auto">
+Klik pada anggota tim untuk melihat detail kontribusi, jobdesk, dan peran masing-masing dalam pengembangan sistem Smart EKG.
+</p>
+
+</div>
+
+<!-- GRID -->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+
+<!-- ===================== MAQREFA ===================== -->
+<div x-data="{ open:false }">
+
+<!-- CARD -->
+<div
+@click="open=true"
+class="card-soft p-8 text-center cursor-pointer hover:scale-105 duration-300">
+
+<img
+src="image/akbar_ekg.jpeg"
+class="w-24 h-24 rounded-full mx-auto mb-5 object-cover border-4 border-white shadow-lg">
+
+<h3 class="font-bold text-xl text-slate-800">
+Maqrefa Akbar
+</h3>
+
+<p class="text-[#259e8d] font-semibold mt-2">
+Hardware & IoT Engineer
+</p>
+
+</div>
+
+<!-- MODAL -->
+<div
+x-show="open"
+x-transition
+class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
+
+<div
+@click.away="open=false"
+class="bg-white rounded-[32px] p-8 max-w-md w-full relative">
+
+<img
+src="image/akbar_ekg.jpeg"
+class="w-28 h-28 rounded-full mx-auto mb-5 object-cover border-4 border-[#259e8d] shadow-lg">
+
+<h2 class="text-2xl font-bold text-center mb-2 text-slate-800">
+Maqrefa Akbar
+</h2>
+
+<p class="text-center text-[#259e8d] font-semibold mb-6">
+Hardware & IoT Engineer
+</p>
+
+<div class="space-y-4 text-slate-600 text-sm leading-7">
+
+<p>
+<b>NIM:</b> 2307421037
+</p>
+
+<p>
+<b>Jobdesk:</b>
+</p>
+
+<ul class="list-disc pl-5">
+
+<li>Integrasi sensor Olimex ECG</li>
+<li>Pengembangan komunikasi perangkat IoT</li>
+<li>Konfigurasi ESP32 sebagai gateway</li>
+<li>Implementasi komunikasi HTTP/HTTPS</li>
+<li>Optimasi pengiriman data realtime</li>
+<li>Pengujian konektivitas perangkat</li>
+
+</ul>
+
+</div>
+
+<button
+@click="open=false"
+class="mt-8 w-full py-4 rounded-full bg-[#259e8d] text-white font-semibold hover:opacity-90">
+
+Tutup
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ===================== GHEA ===================== -->
+<div x-data="{ open:false }">
+
+<!-- CARD -->
+<div
+@click="open=true"
+class="card-soft p-8 text-center cursor-pointer hover:scale-105 duration-300">
+
+<img
+src="image/ghea_ekg.jpg"
+class="w-24 h-24 rounded-full mx-auto mb-5 object-cover border-4 border-white shadow-lg">
+
+<h3 class="font-bold text-xl text-slate-800">
+Ghea Geltra 
+</h3>
+
+<p class="text-[#259e8d] font-semibold mt-2">
+ML Engineer
+</p>
+
+</div>
+
+<!-- MODAL -->
+<div
+x-show="open"
+x-transition
+class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
+
+<div
+@click.away="open=false"
+class="bg-white rounded-[32px] p-8 max-w-md w-full relative">
+
+<img
+src="image/ghea_ekg.jpg"
+class="w-28 h-28 rounded-full mx-auto mb-5 object-cover border-4 border-[#259e8d] shadow-lg">
+
+<h2 class="text-2xl font-bold text-center mb-2 text-slate-800">
+Ghea Geltra 
+</h2>
+
+<p class="text-center text-[#259e8d] font-semibold mb-6">
+Machine Learning Engineer
+</p>
+
+<div class="space-y-4 text-slate-600 text-sm leading-7">
+
+<p>
+<b>NIM:</b> 2307421038
+</p>
+
+<p>
+<b>Jobdesk:</b>
+</p>
+
+<ul class="list-disc pl-5">
+
+<li>Pengembangan model AI 1D-CNN</li>
+<li>Training model menggunakan dataset MIT-BIH</li>
+<li>Preprocessing sinyal EKG</li>
+<li>Implementasi AI inference realtime</li>
+<li>Evaluasi performa dan akurasi model</li>
+<li>Analisis hasil klasifikasi aritmia</li>
+
+</ul>
+
+</div>
+
+<button
+@click="open=false"
+class="mt-8 w-full py-4 rounded-full bg-[#259e8d] text-white font-semibold hover:opacity-90">
+
+Tutup
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ===================== NAORA ===================== -->
+<div x-data="{ open:false }">
+
+<!-- CARD -->
+<div
+@click="open=true"
+class="card-soft p-8 text-center cursor-pointer hover:scale-105 duration-300">
+
+<img
+src="image/naora_ekg.jpeg"
+class="w-24 h-24 rounded-full mx-auto mb-5 object-cover border-4 border-white shadow-lg">
+
+<h3 class="font-bold text-xl text-slate-800">
+Naora Adhani
+</h3>
+
+<p class="text-[#259e8d] font-semibold mt-2">
+UI/UX & Mobile Developer
+</p>
+
+</div>
+
+<!-- MODAL -->
+<div
+x-show="open"
+x-transition
+class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
+
+<div
+@click.away="open=false"
+class="bg-white rounded-[32px] p-8 max-w-md w-full relative">
+
+<img
+src="image/naora_ekg.jpeg"
+class="w-28 h-28 rounded-full mx-auto mb-5 object-cover border-4 border-[#259e8d] shadow-lg">
+
+<h2 class="text-2xl font-bold text-center mb-2 text-slate-800">
+Naora Adhani
+</h2>
+
+<p class="text-center text-[#259e8d] font-semibold mb-6">
+UI/UX & Mobile Developer
+</p>
+
+<div class="space-y-4 text-slate-600 text-sm leading-7">
+
+<p>
+<b>NIM:</b> 2307421041
+</p>
+
+<p>
+<b>Jobdesk:</b>
+</p>
+
+<ul class="list-disc pl-5">
+
+<li>Perancangan antarmuka website dan mobile</li>
+<li>Pengembangan frontend berbasis HTML dan TailwindCSS</li>
+<li>Desain user experience sistem monitoring</li>
+<li>Visualisasi dashboard monitoring EKG</li>
+<li>Optimasi responsive design</li>
+<li>Pengembangan interaksi user interface</li>
+
+</ul>
+
+</div>
+
+<button
+@click="open=false"
+class="mt-8 w-full py-4 rounded-full bg-[#259e8d] text-white font-semibold hover:opacity-90">
+
+Tutup
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ===================== SHANAZ ===================== -->
+<div x-data="{ open:false }">
+
+<!-- CARD -->
+<div
+@click="open=true"
+class="card-soft p-8 text-center cursor-pointer hover:scale-105 duration-300">
+
+<img
+src="image/shanaz_ekg.jpeg"
+class="w-24 h-24 rounded-full mx-auto mb-5 object-cover border-4 border-white shadow-lg">
+
+<h3 class="font-bold text-xl text-slate-800">
+Shanazsiva Nasra
+</h3>
+
+<p class="text-[#259e8d] font-semibold mt-2">
+Cloud Security & Integrator
+</p>
+
+</div>
+
+<!-- MODAL -->
+<div
+x-show="open"
+x-transition
+class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
+
+<div
+@click.away="open=false"
+class="bg-white rounded-[32px] p-8 max-w-md w-full relative">
+
+<img
+src="image/shanaz_ekg.jpeg"
+class="w-28 h-28 rounded-full mx-auto mb-5 object-cover border-4 border-[#259e8d] shadow-lg">
+
+<h2 class="text-2xl font-bold text-center mb-2 text-slate-800">
+Shanazsiva Nasra
+</h2>
+
+<p class="text-center text-[#259e8d] font-semibold mb-6">
+Cloud Security & Integrator
+</p>
+
+<div class="space-y-4 text-slate-600 text-sm leading-7">
+
+<p>
+<b>NIM:</b> 2307421044
+</p>
+
+<p>
+<b>Jobdesk:</b>
+</p>
+
+<ul class="list-disc pl-5">
+
+<li>Integrasi Firebase Realtime Database</li>
+<li>Implementasi cloud synchronization</li>
+<li>Pengelolaan database monitoring pasien</li>
+<li>Konfigurasi authentication system</li>
+<li>Manajemen penyimpanan data EKG</li>
+<li>Pengujian keamanan cloud system</li>
+
+</ul>
+
+</div>
+
+<button
+@click="open=false"
+class="mt-8 w-full py-4 rounded-full bg-[#259e8d] text-white font-semibold hover:opacity-90">
+
+Tutup
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- FOOTER -->
+<footer class="border-t border-slate-100 py-10 text-center text-slate-400 text-sm">
+
+<p>
+Smart Portable ECG Monitoring System
+</p>
+
+<p class="mt-2">
+Politeknik Negeri Jakarta • 2026
+</p>
+
+</footer>
+
+</body>
+</html>
